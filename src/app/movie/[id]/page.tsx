@@ -1,23 +1,36 @@
-import { getMovieById } from '@/lib/mockData';
+import { getMovieById, getMovieCredits, getMovieReviews } from '@/lib/tmdb';
 import Navigation from '@/components/Navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star, Clock, Calendar, ChevronLeft, Play } from 'lucide-react';
+import { Star, Clock, Calendar, ChevronLeft, Play, DollarSign, Quote } from 'lucide-react';
 import CastGallery from '@/components/CastGallery';
 
 export default async function MovieDetails({ params }: { params: Promise<{ id: string }> }) {
   const p = await params;
-  const movie = getMovieById(parseInt(p.id, 10));
+  const movie = await getMovieById(p.id);
 
   if (!movie) {
     return (
-      <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--background)' }}>
         <Navigation />
-        <h1>Movie not found</h1>
-        <Link href="/" style={{ color: 'var(--accent)', marginTop: '20px', display: 'block' }}>Go Back</Link>
+        <div style={{ textAlign: 'center' }}>
+          <h1 style={{ fontSize: '2rem', marginBottom: '16px' }}>Movie not found in the Vault.</h1>
+          <Link href="/" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>Return to Home</Link>
+        </div>
       </main>
     );
   }
+
+  const [credits, reviewsRaw] = await Promise.all([
+    getMovieCredits(p.id),
+    getMovieReviews(p.id)
+  ]);
+
+  const cast = credits?.cast?.slice(0, 10) || [];
+  const directorInfo = credits?.crew?.find((c: any) => c.job === 'Director');
+  const director = directorInfo ? directorInfo.name : 'Unknown';
+  
+  const reviews = reviewsRaw?.results?.slice(0, 3) || [];
 
   const bgUrl = movie.backdrop_path 
     ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}` 
@@ -27,7 +40,7 @@ export default async function MovieDetails({ params }: { params: Promise<{ id: s
     <main style={{ minHeight: '100vh', background: 'var(--background)' }}>
       <Navigation />
 
-      <section style={{ position: 'relative', width: '100%', height: '80vh', overflow: 'hidden' }}>
+      <section style={{ position: 'relative', width: '100%', height: '85vh', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
           <Image 
             src={bgUrl}
@@ -36,55 +49,62 @@ export default async function MovieDetails({ params }: { params: Promise<{ id: s
             priority
             style={{ objectFit: 'cover' }}
             sizes="100vw"
+            unoptimized
           />
         </div>
 
         <div style={{
           position: 'absolute', inset: 0, zIndex: 2,
-          background: 'linear-gradient(to top, var(--background) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.8) 100%)'
+          background: 'linear-gradient(to top, var(--background) 0%, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0.8) 100%)'
         }} />
         <div style={{
           position: 'absolute', inset: 0, zIndex: 3,
-          background: 'radial-gradient(circle at 70% 50%, transparent 0%, var(--background) 120%)'
+          background: 'radial-gradient(circle at 75% 50%, transparent 0%, var(--background) 120%)'
         }} />
 
-        <div className="container" style={{ position: 'relative', zIndex: 10, height: '100%', display: 'flex', alignItems: 'flex-end', paddingBottom: '80px' }}>
+        <div className="container" style={{ position: 'relative', zIndex: 10, height: '100%', display: 'flex', alignItems: 'flex-end', paddingBottom: '90px' }}>
           <div style={{ maxWidth: '800px', animation: 'fadeIn 1s cubic-bezier(0.16, 1, 0.3, 1)' }}>
-            <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: '#a1a1a6', textDecoration: 'none', marginBottom: '24px', fontWeight: 500, transition: 'color 0.3s' }}>
-              <ChevronLeft size={20} /> Back to Trending
+            <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: '#a1a1a6', textDecoration: 'none', marginBottom: '32px', fontWeight: 500, transition: 'color 0.3s' }}>
+              <ChevronLeft size={20} /> Back to Discover
             </Link>
             
-            <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' }}>
-              {movie.genres?.map((g) => (
-                <span key={g} className="glass-pill">{g}</span>
+            <div style={{ display: 'flex', gap: '14px', marginBottom: '24px', flexWrap: 'wrap' }}>
+              {movie.genres?.map((g: any) => (
+                <span key={g.id || g} className="glass-pill">{g.name || g}</span>
               ))}
             </div>
 
-            <h1 className="title-hero" style={{ fontSize: 'clamp(3rem, 6vw, 5rem)', marginBottom: '16px' }}>
+            <h1 className="title-hero title-gold" style={{ fontSize: 'clamp(3.5rem, 6vw, 6rem)', marginBottom: '20px', lineHeight: 1.1 }}>
               {movie.title}
             </h1>
             
-            <div style={{ display: 'flex', gap: '24px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '32px', fontSize: '1.1rem', color: '#e5e5e5' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Star size={20} fill="var(--accent)" color="var(--accent)" />
-                <span style={{ fontWeight: 700 }}>{movie.vote_average.toFixed(1)}</span>
+            <div style={{ display: 'flex', gap: '32px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '40px', fontSize: '1.15rem', color: '#e5e5e5' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Star size={24} fill="var(--accent)" color="var(--accent)" />
+                <span style={{ fontWeight: 700, fontSize: '1.25rem' }}>{movie.vote_average?.toFixed(1) || 'NR'}</span>
                 <span style={{ color: '#888' }}>/10</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Clock size={18} />
-                {movie.runtime} min
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Clock size={20} color="var(--accent)" />
+                {movie.runtime ? `${movie.runtime} min` : 'Unknown'}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Calendar size={18} />
-                {new Date(movie.release_date).getFullYear()}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Calendar size={20} color="var(--accent)" />
+                {movie.release_date ? new Date(movie.release_date).getFullYear() : 'TBA'}
               </div>
+              {movie.revenue > 0 && (
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#4ade80' }}>
+                   <DollarSign size={20} />
+                   {(movie.revenue / 1000000).toFixed(1)}M Box Office
+                 </div>
+              )}
             </div>
 
             <div style={{ display: 'flex', gap: '16px' }}>
-              <button className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <Play fill="currentColor" size={20} /> Play Trailer
               </button>
-              <button className="btn-primary" style={{ background: 'var(--glass-bg)', color: 'var(--foreground)', border: '1px solid var(--border-color)', boxShadow: 'none' }}>
+              <button className="btn-primary" style={{ background: 'var(--card-bg)', color: 'var(--foreground)', border: '1px solid var(--border-color)', boxShadow: 'none' }}>
                 + Add to Watchlist
               </button>
             </div>
@@ -92,28 +112,80 @@ export default async function MovieDetails({ params }: { params: Promise<{ id: s
         </div>
       </section>
 
-      <section className="container" style={{ position: 'relative', zIndex: 10, marginTop: '-20px', paddingBottom: '80px' }}>
-        <div className="glass-card" style={{ padding: '40px', background: 'var(--card-bg)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '40px' }}>
-            <div>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '20px', letterSpacing: '-0.02em', color: 'var(--foreground)' }}>
-                Storyline
-              </h3>
-              <p style={{ fontSize: '1.1rem', lineHeight: 1.8, color: '#a1a1a6' }}>
-                {movie.overview}
-              </p>
-              
-              <div style={{ marginTop: '32px' }}>
-                <strong style={{ color: 'var(--foreground)', display: 'block', marginBottom: '8px' }}>Director</strong>
-                <p style={{ color: '#a1a1a6', fontSize: '1.1rem' }}>{movie.director}</p>
+      <section className="container" style={{ position: 'relative', zIndex: 10, marginTop: '-30px', paddingBottom: '100px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+          
+          <div className="glass-card" style={{ padding: '48px', background: 'var(--card-bg)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '60px' }}>
+              <div>
+                <h3 style={{ fontSize: '1.8rem', fontWeight: 600, marginBottom: '24px', letterSpacing: '-0.02em', color: 'var(--foreground)' }}>
+                  Storyline
+                </h3>
+                <p style={{ fontSize: '1.2rem', lineHeight: 1.8, color: '#a1a1a6', fontWeight: 400 }}>
+                  {movie.overview}
+                </p>
+                
+                <div style={{ marginTop: '40px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <strong style={{ color: 'var(--accent)', display: 'block', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Director</strong>
+                  <p style={{ color: 'var(--foreground)', fontSize: '1.3rem', fontWeight: 500 }}>{director}</p>
+                </div>
+              </div>
+
+              <div>
+                <h3 style={{ fontSize: '1.8rem', fontWeight: 600, marginBottom: '24px', letterSpacing: '-0.02em', color: 'var(--foreground)' }}>
+                  Top Cast
+                </h3>
+                {cast.length > 0 ? (
+                  <CastGallery cast={cast.map((c: any) => ({
+                     name: c.name, 
+                     role: c.character, 
+                     profile_path: c.profile_path ? `https://image.tmdb.org/t/p/w200${c.profile_path}` : null 
+                  }))} />
+                ) : (
+                  <p style={{ color: '#888' }}>Cast information not available.</p>
+                )}
               </div>
             </div>
-
-            <div>
-               <CastGallery cast={movie.cast} />
-            </div>
-
           </div>
+
+          <div className="glass-card" style={{ padding: '48px', background: 'var(--card-bg)' }}>
+            <h3 className="title-gold" style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '24px' }}>
+              Why We Recommend It
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}>
+               <div style={{ background: 'rgba(230, 194, 122, 0.05)', padding: '24px', borderRadius: '16px', border: '1px solid rgba(230, 194, 122, 0.1)' }}>
+                  <h4 style={{ color: 'var(--accent)', fontSize: '1.2rem', marginBottom: '12px' }}>Visual & Tone</h4>
+                  <p style={{ color: '#e5e5e5', lineHeight: 1.6 }}>Masterfully crafted cinemetography that perfectly complements the narrative. A must-watch for those who appreciate detailed world-building and strong aesthetic coherence.</p>
+               </div>
+               <div style={{ background: 'rgba(230, 194, 122, 0.05)', padding: '24px', borderRadius: '16px', border: '1px solid rgba(230, 194, 122, 0.1)' }}>
+                  <h4 style={{ color: 'var(--accent)', fontSize: '1.2rem', marginBottom: '12px' }}>Target Audience</h4>
+                  <p style={{ color: '#e5e5e5', lineHeight: 1.6 }}>Perfect for viewers who love deep storytelling, high stakes, and complex character arcs. Best experienced on a big screen.</p>
+               </div>
+            </div>
+          </div>
+
+          {reviews && reviews.length > 0 && (
+            <div>
+              <h3 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '30px', color: 'var(--foreground)' }}>
+                Real-Time Premium Reviews
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px' }}>
+                {reviews.map((rev: any, i: number) => (
+                  <div key={i} className="glass-card" style={{ padding: '30px', borderLeft: '4px solid var(--accent)' }}>
+                     <Quote color="var(--accent)" size={24} style={{ marginBottom: '16px', opacity: 0.5 }} />
+                     <p style={{ color: '#e5e5e5', fontSize: '1.05rem', lineHeight: 1.6, marginBottom: '20px', display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                       "{rev.content}"
+                     </p>
+                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <strong style={{ color: 'var(--accent)' }}>— {rev.author}</strong>
+                        <span style={{ color: '#888', fontSize: '0.85rem' }}>{new Date(rev.created_at).toLocaleDateString()}</span>
+                     </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
         </div>
       </section>
     </main>
