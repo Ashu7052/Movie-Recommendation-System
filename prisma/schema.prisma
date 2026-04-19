@@ -45,3 +45,14 @@ model CastMember {
   movieId     Int
   movie       Movie   @relation(fields: [movieId], references: [id], onDelete: Cascade)
 }
+
+model WatchlistItem {
+  id      Int      @id @default(autoincrement())
+  userId  String   @default("default-user")
+  movieId Int
+  title   String?
+  poster  String?
+  addedAt DateTime @default(now())
+
+  @@unique([userId, movieId])
+}

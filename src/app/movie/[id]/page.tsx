@@ -1,9 +1,10 @@
-import { getMovieById, getMovieCredits, getMovieReviews } from '@/lib/tmdb';
+import { getMovieById, getMovieCredits, getMovieReviews, getMovieVideos } from '@/lib/tmdb';
 import Navigation from '@/components/Navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star, Clock, Calendar, ChevronLeft, Play, DollarSign, Quote } from 'lucide-react';
+import { Star, Clock, Calendar, ChevronLeft, DollarSign, Quote } from 'lucide-react';
 import CastGallery from '@/components/CastGallery';
+import MovieActions from '@/components/MovieActions';
 
 export default async function MovieDetails({ params }: { params: Promise<{ id: string }> }) {
   const p = await params;
@@ -21,9 +22,10 @@ export default async function MovieDetails({ params }: { params: Promise<{ id: s
     );
   }
 
-  const [credits, reviewsRaw] = await Promise.all([
+  const [credits, reviewsRaw, videosRaw] = await Promise.all([
     getMovieCredits(p.id),
-    getMovieReviews(p.id)
+    getMovieReviews(p.id),
+    getMovieVideos(p.id)
   ]);
 
   const cast = credits?.cast?.slice(0, 10) || [];
@@ -31,6 +33,8 @@ export default async function MovieDetails({ params }: { params: Promise<{ id: s
   const director = directorInfo ? directorInfo.name : 'Unknown';
   
   const reviews = reviewsRaw?.results?.slice(0, 3) || [];
+  const trailerEntry = videosRaw?.results?.find((v: any) => v.type === 'Trailer' && v.site === 'YouTube');
+  const trailerKey = trailerEntry ? trailerEntry.key : (videosRaw?.results?.[0]?.key || null);
 
   const bgUrl = movie.backdrop_path 
     ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}` 
@@ -47,7 +51,7 @@ export default async function MovieDetails({ params }: { params: Promise<{ id: s
             alt={movie.title}
             fill
             priority
-            style={{ objectFit: 'cover' }}
+            style={{ objectFit: 'cover', opacity: 1 }}
             sizes="100vw"
             unoptimized
           />
@@ -55,11 +59,15 @@ export default async function MovieDetails({ params }: { params: Promise<{ id: s
 
         <div style={{
           position: 'absolute', inset: 0, zIndex: 2,
-          background: 'linear-gradient(to top, var(--background) 0%, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0.8) 100%)'
+          background: 'linear-gradient(to right, rgba(10,10,10,1) 0%, rgba(10,10,10,0.6) 50%, transparent 100%)'
         }} />
         <div style={{
           position: 'absolute', inset: 0, zIndex: 3,
-          background: 'radial-gradient(circle at 75% 50%, transparent 0%, var(--background) 120%)'
+          background: 'linear-gradient(to top, var(--background) 0%, transparent 90%)'
+        }} />
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 4,
+          background: 'radial-gradient(circle at 75% 50%, transparent 0%, rgba(10,10,10,0.5) 120%)'
         }} />
 
         <div className="container" style={{ position: 'relative', zIndex: 10, height: '100%', display: 'flex', alignItems: 'flex-end', paddingBottom: '90px' }}>
@@ -100,14 +108,7 @@ export default async function MovieDetails({ params }: { params: Promise<{ id: s
               )}
             </div>
 
-            <div style={{ display: 'flex', gap: '16px' }}>
-              <button className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <Play fill="currentColor" size={20} /> Play Trailer
-              </button>
-              <button className="btn-primary" style={{ background: 'var(--card-bg)', color: 'var(--foreground)', border: '1px solid var(--border-color)', boxShadow: 'none' }}>
-                + Add to Watchlist
-              </button>
-            </div>
+            <MovieActions movie={{ id: movie.id, title: movie.title, poster_path: movie.poster_path }} trailerKey={trailerKey} />
           </div>
         </div>
       </section>
@@ -155,11 +156,11 @@ export default async function MovieDetails({ params }: { params: Promise<{ id: s
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}>
                <div style={{ background: 'rgba(230, 194, 122, 0.05)', padding: '24px', borderRadius: '16px', border: '1px solid rgba(230, 194, 122, 0.1)' }}>
                   <h4 style={{ color: 'var(--accent)', fontSize: '1.2rem', marginBottom: '12px' }}>Visual & Tone</h4>
-                  <p style={{ color: '#e5e5e5', lineHeight: 1.6 }}>Masterfully crafted cinemetography that perfectly complements the narrative. A must-watch for those who appreciate detailed world-building and strong aesthetic coherence.</p>
+                  <p style={{ color: '#e5e5e5', lineHeight: 1.6 }}>An immersive cinematic experience that perfectly captures the essence of the {movie.genres?.map((g: any) => g.name || g).slice(0, 2).join(' and ') || 'premium'} genre. With a spectacular {(movie.vote_average > 0 ? movie.vote_average : 8.5).toFixed(1)}/10 rating, its visual aesthetics and masterful tone will keep you captivated from start to finish.</p>
                </div>
                <div style={{ background: 'rgba(230, 194, 122, 0.05)', padding: '24px', borderRadius: '16px', border: '1px solid rgba(230, 194, 122, 0.1)' }}>
                   <h4 style={{ color: 'var(--accent)', fontSize: '1.2rem', marginBottom: '12px' }}>Target Audience</h4>
-                  <p style={{ color: '#e5e5e5', lineHeight: 1.6 }}>Perfect for viewers who love deep storytelling, high stakes, and complex character arcs. Best experienced on a big screen.</p>
+                  <p style={{ color: '#e5e5e5', lineHeight: 1.6 }}>Highly recommended if you appreciate deep emotional arcs, high-stakes narratives, and exceptional world-building. Ideal for viewers looking for a profound and memorable {movie.genres?.[0]?.name || 'entertainment'} masterpiece.</p>
                </div>
             </div>
           </div>

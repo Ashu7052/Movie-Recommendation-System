@@ -4,17 +4,50 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Movie } from '@/lib/mockData';
 import MovieCard from './MovieCard';
+import MovieRow from './MovieRow';
 
 const GENRES = ['All', 'Trending', 'Action', 'Science Fiction', 'Romance', 'Comedy', 'Drama', 'Thriller'];
 
-export default function InteractiveShowcase({ movies }: { movies: Movie[] }) {
+const GENRE_MAP: Record<string, number> = {
+  'Action': 28,
+  'Science Fiction': 878,
+  'Romance': 10749,
+  'Comedy': 35,
+  'Drama': 18,
+  'Thriller': 53
+};
+
+export default function InteractiveShowcase({ 
+  movies,
+  hollywood,
+  bollywood,
+  telugu,
+  malayalam
+}: { 
+  movies: any[],
+  hollywood: any[],
+  bollywood: any[],
+  telugu: any[],
+  malayalam: any[]
+}) {
   const [activeGenre, setActiveGenre] = useState('All');
 
-  const filteredMovies = movies.filter(m => {
+  const filterMovies = (list: any[]) => list.filter((m: any) => {
     if (activeGenre === 'All') return true;
-    if (activeGenre === 'Trending') return m.vote_average >= 8.0;
-    return m.genres.includes(activeGenre);
+    if (activeGenre === 'Trending') return m.vote_average >= 7.5;
+    
+    const genreId = GENRE_MAP[activeGenre];
+    if (m.genre_ids && Array.isArray(m.genre_ids)) {
+      return m.genre_ids.includes(genreId);
+    }
+    return m.genres?.includes(activeGenre);
   });
+
+  const filteredMovies = filterMovies(movies);
+  const filteredHollywood = filterMovies(hollywood);
+  const filteredBollywood = filterMovies(bollywood);
+  const filteredTelugu = filterMovies(telugu);
+  const filteredMalayalam = filterMovies(malayalam);
 
   return (
     <div style={{ padding: '60px 0', position: 'relative', zIndex: 10 }}>
@@ -84,7 +117,7 @@ export default function InteractiveShowcase({ movies }: { movies: Movie[] }) {
         <AnimatePresence mode="popLayout">
           {filteredMovies.map((movie, i) => (
             <motion.div
-              key={movie.id}
+              key={`${movie.id}-${i}`}
               layout
               initial={{ opacity: 0, scale: 0.8, y: 50, filter: 'blur(10px)' }}
               animate={{ opacity: 1, scale: 1, y: 0, filter: 'blur(0px)' }}
@@ -105,6 +138,16 @@ export default function InteractiveShowcase({ movies }: { movies: Movie[] }) {
           </motion.div>
         )}
       </motion.div>
+
+      {/* Synchronized Regional Rows */}
+      <div id="movies" className="container" style={{ marginTop: '100px' }}>
+        <motion.div layout>
+          <MovieRow title={`Best ${activeGenre !== 'All' ? activeGenre : ''} Hollywood Blockbusters`} movies={filteredHollywood} />
+          <MovieRow title={`Top ${activeGenre !== 'All' ? activeGenre : ''} Bollywood Picks`} movies={filteredBollywood} />
+          <MovieRow title={`${activeGenre !== 'All' ? activeGenre : ''} Telugu Sensations`} movies={filteredTelugu} />
+          <MovieRow title={`Masterpiece ${activeGenre !== 'All' ? activeGenre : ''} Malayalam Hits`} movies={filteredMalayalam} />
+        </motion.div>
+      </div>
     </div>
   );
 }

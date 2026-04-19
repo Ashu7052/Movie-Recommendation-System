@@ -16,9 +16,9 @@ export default function Navigation() {
   }, [scrollY]);
 
   const navLinks = [
-    { name: 'Discover', href: '#discover', icon: Compass },
-    { name: 'Movies', href: '#movies', icon: Film },
-    { name: 'Trending', href: '#trending', icon: TrendingUp }
+    { name: 'Discover', href: '/#discover', icon: Compass },
+    { name: 'Movies', href: '/#movies', icon: Film },
+    { name: 'Trending', href: '/#trending', icon: TrendingUp }
   ];
 
   return (
@@ -62,25 +62,27 @@ export default function Navigation() {
           >
             <Search size={20} />
           </motion.button>
-          <motion.div 
-            whileHover={{ scale: 1.1, borderColor: 'var(--accent)' }}
-            whileTap={{ scale: 0.95 }}
-            style={{ 
-              width: '40px', 
-              height: '40px', 
-              borderRadius: '50%', 
-              background: 'rgba(230, 194, 122, 0.05)', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              cursor: 'pointer',
-              border: '1px solid rgba(230, 194, 122, 0.15)',
-              color: 'var(--accent)',
-              transition: 'all 0.3s'
-            }}
-          >
-            <User size={18} />
-          </motion.div>
+          <Link href="/profile" style={{ textDecoration: 'none' }}>
+            <motion.div 
+              whileHover={{ scale: 1.1, borderColor: 'var(--accent)' }}
+              whileTap={{ scale: 0.95 }}
+              style={{ 
+                width: '40px', 
+                height: '40px', 
+                borderRadius: '50%', 
+                background: 'rgba(230, 194, 122, 0.05)', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                cursor: 'pointer',
+                border: '1px solid rgba(230, 194, 122, 0.15)',
+                color: 'var(--accent)',
+                transition: 'all 0.3s'
+              }}
+            >
+              <User size={18} />
+            </motion.div>
+          </Link>
         </div>
       </div>
     </motion.nav>
